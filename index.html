@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediPort Signpost — NF2-SWN resource hub (prototype)</title>
+<meta name="description" content="Find trusted NF2-related schwannomatosis resources by role, journey stage and country.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f3ec; --paper:#fffdf8; --ink:#14302f; --muted:#4f6463; --line:#ddd6c8;
+    --accent:#0e6b5c; --accent-ink:#ffffff; --accent-soft:#dcefe9;
+    --warn:#8a5a00; --warn-soft:#fbefd4;
+    --focus:#c2410c;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html{font-size:17px}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,sans-serif;line-height:1.55}
+  a{color:var(--accent)}
+  :focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+  .skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:var(--paper);padding:8px 12px;z-index:9}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+  header{padding:40px 0 8px}
+  .eyebrow{display:inline-block;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--paper)}
+  h1{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:clamp(1.9rem,4.4vw,2.8rem);line-height:1.12;margin:14px 0 10px;max-width:22ch}
+  .lede{color:var(--muted);max-width:60ch;margin:0}
+
+  .finder{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin:26px 0 18px}
+  fieldset{border:0;margin:0 0 18px;padding:0}
+  legend{font-weight:700;margin-bottom:8px;display:flex;gap:10px;align-items:center}
+  .num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font-size:.85rem}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font:inherit;font-size:.95rem;border:1.5px solid var(--line);background:#fff;color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer;min-height:40px}
+  .chip:hover{border-color:var(--accent)}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .row{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center;border-top:1px dashed var(--line);padding-top:16px}
+  .search{flex:1 1 260px;display:flex}
+  .search input{flex:1;font:inherit;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;background:#fff;min-height:44px}
+  label.toggle{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:.95rem}
+  label.toggle input{width:20px;height:20px;accent-color:var(--accent)}
+
+  .bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin:8px 0 14px}
+  .count{font-weight:700}
+  .count small{font-weight:400;color:var(--muted)}
+  .btn{font:inherit;font-size:.92rem;border:1.5px solid var(--ink);background:transparent;color:var(--ink);padding:7px 14px;border-radius:10px;cursor:pointer;min-height:40px}
+  .btn:hover{background:var(--ink);color:#fff}
+  .status{font-size:.9rem;color:var(--accent);min-height:1.2em}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;padding:0;margin:0;list-style:none}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:10px}
+  .card h3{margin:0;font-size:1.08rem;line-height:1.3}
+  .org{color:var(--muted);font-size:.9rem;margin-top:-6px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px}
+  .tag{font-size:.78rem;padding:2px 9px;border-radius:999px;background:#efebe2;color:var(--ink)}
+  .tag.rel-official{background:#d9efe2}.tag.rel-med{background:#dcefe9}.tag.rel-vol{background:#fbe5d2}.tag.rel-news{background:#e7e7e7}
+  .tag.verify{background:var(--warn-soft);color:var(--warn);font-weight:700}
+  .card p{margin:0}
+  .access{font-size:.9rem;background:#f1f6f4;border-left:3px solid var(--accent);padding:6px 10px;border-radius:0 8px 8px 0}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.85rem;color:var(--muted)}
+  .open{white-space:nowrap;font-weight:700;text-decoration:none;border-bottom:2px solid currentColor}
+  .empty{background:var(--paper);border:1px dashed var(--line);border-radius:var(--r);padding:28px;text-align:center}
+
+  footer{margin:40px 0 50px;font-size:.88rem;color:var(--muted);border-top:1px solid var(--line);padding-top:18px}
+  footer p{max-width:75ch}
+  @media (max-width:560px){html{font-size:16px}.finder{padding:16px}}
+  @media (prefers-reduced-motion:no-preference){.card{animation:in .25s ease both}@keyframes in{from{opacity:0;transform:translateY(4px)}}}
+</style>
+</head>
+<body>
+<a class="skip" href="#results">Skip to results</a>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">MediPort · prototype</span>
+    <h1>Find NF2-SWN help that fits where you are.</h1>
+    <p class="lede">Trusted information already exists, but it is spread across many charities, hospitals and countries. Answer three quick questions and we'll point you to the right places.</p>
+  </header>
+
+  <form class="finder" id="finder" aria-label="Filter resources">
+    <fieldset>
+      <legend><span class="num" aria-hidden="true">1</span>I am…</legend>
+      <div class="chips" data-group="role"></div>
+    </fieldset>
+    <fieldset>
+      <legend><span class="num" aria-hidden="true">2</span>I need help with…</legend>
+      <div class="chips" data-group="stage"></div>
+    </fieldset>
+    <fieldset>
+      <legend><span class="num" aria-hidden="true">3</span>I live in…</legend>
+      <div class="chips" data-group="country"></div>
+    </fieldset>
+    <div class="row">
+      <div class="search"><input id="q" type="search" placeholder="Search, e.g. lip-reading, helpline, Oxford" aria-label="Search resources"></div>
+      <label class="toggle"><input type="checkbox" id="intl" checked> Include international resources</label>
+      <label class="toggle"><input type="checkbox" id="nohearing"> Works without hearing (text/email)</label>
+    </div>
+  </form>
+
+  <div class="bar">
+    <div class="count" id="count" aria-live="polite"></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="status" id="status" aria-live="polite"></span>
+      <button class="btn" id="copy" type="button">Copy this list</button>
+      <button class="btn" id="reset" type="button">Reset</button>
+    </div>
+  </div>
+
+  <ul class="grid" id="results"></ul>
+
+  <footer>
+    <p><strong>Not medical advice.</strong> This hub links to information published by other organisations. Summaries are our own words; always follow your care team's advice. Each card shows when its link was last checked.</p>
+    <p>Prototype for the MediPort project · data from the NF2-SWN Resource Map (53 resources, last updated 2026-11-22).</p>
+  </footer>
+</div>
+
+<script>
+const DATA = [{"name": "What is NF2? (condition overview)", "org": "NF2 Information & Services (NF2IS)", "country": "International", "roles": ["Patient", "Caregiver"], "stages": ["Newly diagnosed"], "type": "Information page", "url": "https://www.nf2is.org/merlin.php", "summary": "Plain-language explainer of NF2 and its main health risks, with pages by body area (tumours, eyes, cranial nerves, spine, peripheral nerves).", "access": "Text-only pages, so they work for readers with hearing loss.", "reliability": "Volunteer-run", "status": "Verified", "checked": "2026-11-22"}, {"name": "Treatment options hub", "org": "NF2 Information & Services (NF2IS)", "country": "International", "roles": ["Patient", "Caregiver"], "stages": ["Treatment decisions"], "type": "Information page", "url": "https://www.nf2is.org/treatment_options.php", "summary": "Overview of surgery, radiation, drug treatments and hearing implants, with a sub-page for each.", "access": "Text-only.", "reliability": "Volunteer-run", "status": "Verified", "checked": "2026-11-22"}, {"name": "NF2 treatment centres list", "org": "NF2 Information & Services (NF2IS)", "country": "International", "roles": ["Patient", "Caregiver"], "stages": ["Ongoing care"], "type": "Directory", "url": "https://www.nf2is.org/treatment_centers.php", "summary": "List of centres that treat NF2.", "access": "Check each centre's details directly: list is volunteer-maintained.", "reliability": "Volunteer-run", "status": "Verified", "checked": "2026-11-22"}, {"name": "Hearing implants (ABI / cochlear)", "org": "NF2 Information & Services (NF2IS)", "country": "International", "roles": ["Patient", "Caregiver"], "stages": ["Hearing & communication", "Treatment decisions"], "type": "Information page", "url": "https://www.nf2is.org/hearing_implants.php", "summary": "Explains hearing implant options for people with NF2.", "access": "Text-only.", "reliability": "Volunteer-run", "status": "Verified", "checked": "2026-11-22"}, {"name": "Genetics & family planning", "org": "NF2 Information & Services (NF2IS)", "country": "International", "roles": ["Patient", "Caregiver"], "stages": ["Diagnosis", "Daily life"], "type": "Information page", "url": "https://www.nf2is.org/genetics.php", "summary": "How NF2 is inherited, plus a related family-planning page.", "access": "Text-only.", "reliability": "Volunteer-run", "status": "Verified", "checked": "2026-11-22"}, {"name": "NF2 Crew (online peer community)", "org": "NF2IS", "country": "International", "roles": ["Patient", "Caregiver"], "stages": ["Newly diagnosed", "Daily life"], "type": "Peer support", "url": "https://nf2is.org/groups.php", "summary": "Online support community for people with NF2 and their families. CHOP's NF2 Crew page now redirects here.", "access": "Online and text-based, so suits deaf users.", "reliability": "Volunteer-run", "status": "Verified", "checked": "2026-11-22"}, {"name": "NF2-SWN overview & resources", "org": "Children's Tumor Foundation (CTF)", "country": "US", "roles": ["Patient", "Caregiver"], "stages": ["Newly diagnosed"], "type": "Information page", "url": "https://ctf.org/?p=8879", "summary": "CTF's main NF2-SWN page: what it is, treatments, and links to clinics and resources.", "access": "Check videos for captions.", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "Diagnosed with NF2-SWN guide (2024)", "org": "Children's Tumor Foundation (CTF)", "country": "US", "roles": ["Patient", "Caregiver"], "stages": ["Newly diagnosed", "Diagnosis"], "type": "Brochure (PDF)", "url": "https://www.ctf.org/wp-content/uploads/2023/12/CTF-Diagnosed-with-NF2-Brochure-2024_v2.pdf", "summary": "Booklet for newly and previously diagnosed people: genetics, symptoms, treatment, how diagnosis works, research, getting involved.", "access": "Downloadable and printable.", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "NF2-SWN fact sheet", "org": "Children's Tumor Foundation (CTF)", "country": "US", "roles": ["Patient", "Caregiver", "Employer"], "stages": ["Newly diagnosed"], "type": "Fact sheet (PDF)", "url": "https://www.ctf.org/wp-content/uploads/2023/12/CTF_NF2SWN_FactSheet_rochure.pdf", "summary": "One-page summary. Covers the 2022 renaming to NF2-SWN and how common it is. Handy to give to others.", "access": "Short, easy to share.", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "Find a Doctor / NF Clinic Network", "org": "Children's Tumor Foundation (CTF)", "country": "US", "roles": ["Patient", "Caregiver", "Clinician"], "stages": ["Ongoing care"], "type": "Clinic directory", "url": "https://ctf.org/doctor", "summary": "List of NF specialty clinics. CTF advises choosing ones that see many NF2-SWN patients.", "access": "Mostly US clinics.", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "NF Resource Library", "org": "Children's Tumor Foundation (CTF)", "country": "US", "roles": ["Patient", "Caregiver", "Clinician"], "stages": ["Newly diagnosed", "Daily life"], "type": "Resource library", "url": "https://ctf.org/?p=3670", "summary": "Library of brochures, fact sheets, infographics and webinars, including some Spanish versions.", "access": "Some material in Spanish.", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "NF Registry", "org": "Children's Tumor Foundation (CTF)", "country": "International", "roles": ["Patient", "Caregiver"], "stages": ["Research & trials"], "type": "Patient registry", "url": "https://nfregistry.org", "summary": "Patient-entered registry that matches people to clinical trials and shares de-identified data with researchers. Open to NF1, NF2-SWN and SWN.", "access": "Online form. Adults enrol themselves; parents enrol children.", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "Progress in NF2-SWN research (INTUITT-NF2)", "org": "Children's Tumor Foundation (CTF)", "country": "US", "roles": ["Patient", "Clinician"], "stages": ["Research & trials"], "type": "Research update", "url": "https://ctf.org/progress-in-schwannomatosis", "summary": "Plain-language update on CTF-funded research, including the INTUITT-NF2 platform trial.", "access": "", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "INTUITT-NF2 trial record (NCT04374305)", "org": "ClinicalTrials.gov", "country": "US", "roles": ["Clinician", "Patient"], "stages": ["Research & trials", "Treatment decisions"], "type": "Trial registry", "url": "https://clinicaltrials.gov/study/NCT04374305", "summary": "Official record of the multi-drug platform trial for progressive NF2-SWN tumours (ages 12+).", "access": "Technical language.", "reliability": "Clinical / official", "status": "To verify", "checked": "2026-11-22"}, {"name": "Brigatinib results press release (2024)", "org": "Mass General Hospital", "country": "US", "roles": ["Patient", "Caregiver"], "stages": ["Research & trials", "Treatment decisions"], "type": "News release", "url": "https://www.massgeneral.org/news/press-release/approved-drug-may-be-repurposed-for-nf2", "summary": "Lay summary of the 2024 NEJM result: brigatinib shrank some NF2-SWN tumours, and some patients reported better hearing and less pain.", "access": "", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "NCCN guideline inclusion of brigatinib (commentary)", "org": "OncLive", "country": "US", "roles": ["Clinician"], "stages": ["Treatment decisions"], "type": "News / commentary", "url": "https://www.onclive.com/view/nccn-guideline-inclusion-broadens-access-to-brigatinib-in-nf2-related-schwannomatosis", "summary": "Oct 2026 interview on the INTUITT-NF2 findings and brigatinib's inclusion in NCCN guidance.", "access": "Clinician audience.", "reliability": "News / commentary", "status": "To verify", "checked": "2026-11-22"}, {"name": "2022 diagnostic criteria & nomenclature (Plotkin et al.)", "org": "Genetics in Medicine", "country": "International", "roles": ["Clinician"], "stages": ["Diagnosis"], "type": "Consensus paper", "url": "https://doi.org/10.1016/j.gim.2022.05.007", "summary": "International consensus that updated the diagnostic criteria (including mosaic forms) and retired the name 'neurofibromatosis 2'.", "access": "Open-access copy on HAL (CC BY-NC-ND).", "reliability": "Research paper", "status": "Verified", "checked": "2026-11-22"}, {"name": "GeneReviews: NF2", "org": "NCBI / NIH", "country": "International", "roles": ["Clinician"], "stages": ["Diagnosis", "Ongoing care"], "type": "Clinical reference", "url": "https://www.ncbi.nlm.nih.gov/books/NBK1201/", "summary": "Clinician reference on diagnosis, genetics, inheritance and management.", "access": "Technical.", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "MedlinePlus Genetics: NF2", "org": "US National Library of Medicine", "country": "International", "roles": ["Patient", "Caregiver"], "stages": ["Newly diagnosed", "Diagnosis"], "type": "Information page", "url": "https://medlineplus.gov/genetics/condition/neurofibromatosis-type-2", "summary": "Plain-language genetics summary (the NF2 gene and the merlin protein).", "access": "", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "NORD rare disease report: NF2-SWN", "org": "NORD", "country": "US", "roles": ["Patient", "Caregiver"], "stages": ["Newly diagnosed"], "type": "Information page", "url": "https://rarediseases.org/rare-diseases/neurofibromatosis-2/", "summary": "Full disease report with a trials section. Last updated Feb 2023.", "access": "Has a Spanish version.", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "NF2-SWN & Hearing webinar", "org": "NF Network", "country": "US", "roles": ["Patient", "Caregiver"], "stages": ["Hearing & communication"], "type": "Webinar", "url": "https://www.nfnetwork.org/pages-events/webinar-nf2-swn-and-hearing/", "summary": "Specialist talk on hearing preservation and restoration, plus a lived-experience panel on ASL, lip-reading, assistive tech, service dogs and home safety.", "access": "Check for captions and transcript.", "reliability": "Charity", "status": "Verified", "checked": "2026-11-22"}, {"name": "Beyond Sound: communication workshop", "org": "NF Northeast", "country": "US", "roles": ["Patient", "Caregiver"], "stages": ["Hearing & communication"], "type": "Event (past)", "url": "https://www.nfnortheast.org/event/beyond-sound-communication-strategies/", "summary": "In-person workshop on communication strategies for deaf and hard-of-hearing people with NF2-SWN (held Nov 2025).", "access": "Past event; good model for content.", "reliability": "Charity", "status": "Verified", "checked": "2026-11-22"}, {"name": "Acoustic Neuroma Association (ANA)", "org": "ANA", "country": "US", "roles": ["Patient", "Caregiver"], "stages": ["Treatment decisions", "Hearing & communication"], "type": "Charity + peer support", "url": "https://www.anausa.org", "summary": "Peer mentors, discussion forum, support groups, and links on hearing, balance and NF2.", "access": "Phone, email and video mentoring.", "reliability": "Charity", "status": "Verified", "checked": "2026-11-22"}, {"name": "Mayo Clinic NF2 Clinic (Arizona)", "org": "Mayo Clinic", "country": "US", "roles": ["Patient", "Clinician"], "stages": ["Ongoing care"], "type": "Specialist clinic", "url": "https://www.mayoclinic.org/medical-professionals/neurology-neurosurgery/news/nf2-clinic-proactive-coordinated-multidisciplinary-care/mac-20509266", "summary": "Multidisciplinary NF2 clinic with annual follow-ups and access to trials. A model of coordinated care.", "access": "", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "NHS: NF2 overview", "org": "NHS", "country": "UK", "roles": ["Patient", "Caregiver"], "stages": ["Newly diagnosed"], "type": "Information page", "url": "https://www.nhs.uk/conditions/neurofibromatosis-type-2/", "summary": "Official NHS overview with links to Nerve Tumours UK support for adults, teenagers and parents.", "access": "", "reliability": "Clinical / official", "status": "To verify", "checked": "2026-11-22"}, {"name": "Nerve Tumours UK Helpline", "org": "Nerve Tumours UK", "country": "UK", "roles": ["Patient", "Caregiver", "Clinician"], "stages": ["Newly diagnosed", "Ongoing care", "Daily life"], "type": "Helpline", "url": "https://nervetumours.org.uk/help/line/", "summary": "Phone and email helpline run by specialist NF advisers. Freephone 0300 102 17 22, Mon/Wed/Fri 9am–5pm.", "access": "Email option for people who can't use the phone.", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "Support for adults with NF2", "org": "Nerve Tumours UK", "country": "UK", "roles": ["Patient"], "stages": ["Ongoing care", "Daily life"], "type": "Information page", "url": "https://nervetumours.org.uk/what-are-nerve-tumours/what-is-nf2/support-for-adults-with-nf2/", "summary": "Lived-experience tips, plus specialists who help with referrals and appointment coordination. Links to NF Masterclass videos.", "access": "", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "NF2 support booklet for adults", "org": "Nerve Tumours UK", "country": "UK", "roles": ["Patient"], "stages": ["Newly diagnosed", "Daily life"], "type": "Booklet (PDF)", "url": "https://nervetumours.org.uk/images/downloads/NTUK_NF2_Support_for_Adults_v2-compressed.pdf", "summary": "Adult guide to living with NF2, with patient quotes and an overview of specialist support.", "access": "Printable.", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "Support for Medics (NF2)", "org": "Nerve Tumours UK", "country": "UK", "roles": ["Clinician"], "stages": ["Diagnosis", "Ongoing care"], "type": "Clinician resource", "url": "https://nervetumours.org.uk/what-are-nerve-tumours/what-is-nf2/support-for-medics-nf2/", "summary": "GP and clinician primer, plus sign-up to a gated medical resources section.", "access": "Medical section needs registration.", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "Support for Employers (NF2)", "org": "Nerve Tumours UK", "country": "UK", "roles": ["Employer"], "stages": ["Daily life"], "type": "Information page", "url": "https://nervetumours.org.uk/what-are-nerve-tumours/what-is-nf2/support-for-employers-nf2/", "summary": "How to support an employee with NF2, with pointers to workplace hearing-loss advice.", "access": "", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "How to use Lipspeakers (video)", "org": "Nerve Tumours UK", "country": "UK", "roles": ["Patient", "Caregiver"], "stages": ["Hearing & communication"], "type": "Video", "url": "https://nervetumours.org.uk/news/how-to-use-lipspeakers-support-for-those-affected-by-hearing-loss/", "summary": "Demonstration of lipspeaking by a speech therapist who worked in an NF2 team.", "access": "Visual by design.", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "Accessible online meetings (CART / captions)", "org": "Nerve Tumours UK", "country": "UK", "roles": ["Patient", "Clinician"], "stages": ["Hearing & communication"], "type": "Article", "url": "https://nervetumours.org.uk/news/accessible-online-meetings-for-those-with-hearing-impairment/P261", "summary": "Lip-reading and live captioning (CART) for video calls. Relevant to telehealth.", "access": "", "reliability": "Charity (medically advised)", "status": "Verified", "checked": "2026-11-22"}, {"name": "Oxford NF2 service (South West)", "org": "Oxford University Hospitals NHS", "country": "UK", "roles": ["Patient", "Caregiver"], "stages": ["Ongoing care"], "type": "Specialist clinic", "url": "https://ouh.nhs.uk/nf2/services", "summary": "One of four national NF2 centres (with Cambridge, London, Manchester). Satellite clinics in Bristol, Plymouth and Southampton.", "access": "", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "Oxford NF2 support & useful links", "org": "Oxford University Hospitals NHS", "country": "UK", "roles": ["Patient", "Caregiver"], "stages": ["Daily life", "Hearing & communication"], "type": "Support page", "url": "https://ouh.nhs.uk/nf2/support", "summary": "Nurse practitioners (help with forms, benefits and communicating in clinic) and links on hearing loss, tinnitus, jobs and benefits.", "access": "Nurses help with communication at appointments.", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "Cambridge NF2 service (Midlands/Eastern)", "org": "Cambridge University Hospitals NHS", "country": "UK", "roles": ["Patient", "Caregiver"], "stages": ["Ongoing care"], "type": "Specialist clinic", "url": "https://www.cuh.nhs.uk/our-services/cambridge-skull-base-unit/nf2-service/", "summary": "National NF2 centre with a monthly MDT clinic, neurology, hearing implants and clinical psychology.", "access": "Has a psychologist in the team.", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "Manchester NF2 clinic", "org": "Manchester University NHS FT", "country": "UK", "roles": ["Patient", "Caregiver"], "stages": ["Ongoing care"], "type": "Specialist clinic", "url": "https://mft.nhs.uk/mri/services/specialist-services", "summary": "Regional specialist NF2 assessment and management centre.", "access": "", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "Guy's & St Thomas' NF2 clinic (London)", "org": "Guy's and St Thomas' NHS FT", "country": "UK", "roles": ["Patient", "Caregiver"], "stages": ["Ongoing care"], "type": "Specialist clinic", "url": "https://guysandstthomas.nhs.uk/our-services/neurofibromatosis/clinics", "summary": "London NF2 schwannomatosis clinic, Monday and Wednesday.", "access": "Takes texts on its mobile line, which suits deaf patients.", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "Hearing Link Services (incl. NF2 programme)", "org": "Hearing Link / Hearing Dogs for Deaf People", "country": "UK", "roles": ["Patient", "Caregiver"], "stages": ["Hearing & communication"], "type": "Rehab programme", "url": "https://www.hearinglink.org", "summary": "Support for adults with acquired hearing loss and their families. Has run an NF2-specific residential rehab programme.", "access": "Confirm the NF2 programme is still running.", "reliability": "Charity", "status": "To verify", "checked": "2026-11-22"}, {"name": "British Acoustic Neuroma Association (BANA)", "org": "BANA", "country": "UK", "roles": ["Patient", "Caregiver"], "stages": ["Treatment decisions", "Daily life"], "type": "Charity + peer support", "url": "https://www.bana-uk.com", "summary": "Information and in-person and virtual support groups for acoustic neuroma and related conditions.", "access": "Virtual groups available.", "reliability": "Charity", "status": "Verified", "checked": "2026-11-22"}, {"name": "Rare Resources guides", "org": "Genetic Alliance UK", "country": "UK", "roles": ["Caregiver", "Patient"], "stages": ["Newly diagnosed", "Daily life"], "type": "Guide series", "url": "https://geneticalliance.org.uk/support-and-information/rare-resources/", "summary": "Guides on getting a rare diagnosis, using the NHS, and support for parents and carers (England, Scotland, Wales).", "access": "Wales guides also in Welsh.", "reliability": "Charity", "status": "Verified", "checked": "2026-11-22"}, {"name": "The Brain Charity: acoustic neuroma support", "org": "The Brain Charity", "country": "UK", "roles": ["Patient", "Caregiver"], "stages": ["Daily life"], "type": "Emotional & practical support", "url": "https://www.thebraincharity.org.uk/condition/acoustic-neuroma/", "summary": "Counselling, befriending, practical help and free carer support for neurological conditions, including NF2.", "access": "Has carer-specific support.", "reliability": "Charity", "status": "Verified", "checked": "2026-11-22"}, {"name": "CTF Australia support coordinator", "org": "Children's Tumour Foundation of Australia", "country": "AU", "roles": ["Patient", "Caregiver"], "stages": ["Newly diagnosed", "Ongoing care", "Daily life"], "type": "Helpline", "url": "https://www.ctf.org.au/get-support", "summary": "National NF support service. Tel 02 9713 6111, support@ctf.org.au, Mon–Fri 9am–5pm AEST.", "access": "Email option.", "reliability": "Charity", "status": "Verified", "checked": "2026-11-22"}, {"name": "Understanding NF2 brochure (AU)", "org": "Children's Tumour Foundation of Australia", "country": "AU", "roles": ["Patient", "Caregiver"], "stages": ["Newly diagnosed", "Treatment decisions"], "type": "Brochure (PDF)", "url": "https://ctfchildrenstumourfound.blob.core.windows.net/assets/pages/NF2%20Brochure.pdf", "summary": "Australian NF2 overview covering surgery, radiosurgery, radiotherapy and hearing rehabilitation.", "access": "Uses the older name 'NF2'.", "reliability": "Charity", "status": "Verified", "checked": "2026-11-22"}, {"name": "CTF AU resources & webinars", "org": "Children's Tumour Foundation of Australia", "country": "AU", "roles": ["Patient", "Caregiver"], "stages": ["Newly diagnosed", "Daily life"], "type": "Resource library", "url": "https://www.ctf.org.au/resources", "summary": "Fact sheets, toolkits and health-management kits, plus quarterly expert webinars.", "access": "Check webinars for captions.", "reliability": "Charity", "status": "Verified", "checked": "2026-11-22"}, {"name": "CTF AU Navigate Care", "org": "Children's Tumour Foundation of Australia", "country": "AU", "roles": ["Patient", "Caregiver"], "stages": ["Ongoing care"], "type": "Care navigation", "url": "https://www.ctf.org.au/navigate-care", "summary": "CTF AU's care-navigation section.", "access": "Content not yet reviewed.", "reliability": "Charity", "status": "To verify", "checked": "2026-11-22"}, {"name": "CTF AU Connect with Others", "org": "Children's Tumour Foundation of Australia", "country": "AU", "roles": ["Patient", "Caregiver"], "stages": ["Daily life"], "type": "Peer support", "url": "https://www.ctf.org.au/connect-with-others", "summary": "CTF AU's peer-connection programs.", "access": "Content not yet reviewed.", "reliability": "Charity", "status": "To verify", "checked": "2026-11-22"}, {"name": "RNSH Neurofibromatosis Clinic (Sydney)", "org": "Royal North Shore Hospital, NSLHD", "country": "AU", "roles": ["Patient", "Clinician"], "stages": ["Diagnosis", "Ongoing care"], "type": "Specialist clinic", "url": "https://www.nslhd.health.nsw.gov.au/genetics/Documents/RNSH_NF_Clinic_Referral_Criteria.pdf", "summary": "Diagnostic service for adults and children with NF1, NF2 and SWN. Described as NSW's specialised adult NF service. The link is the referral criteria.", "access": "Needs a referral.", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "Royal Melbourne Hospital adult NF clinic", "org": "Royal Melbourne Hospital", "country": "AU", "roles": ["Patient", "Clinician"], "stages": ["Ongoing care"], "type": "Specialist clinic", "url": "", "summary": "Adult NF clinic with a clinical nurse specialist. No public patient page found yet.", "access": "Ask CTF AU for the referral pathway.", "reliability": "Clinical / official", "status": "Find official page", "checked": "2026-11-22"}, {"name": "RARE Portal & RARE Helpline", "org": "Rare Voices Australia", "country": "AU", "roles": ["Patient", "Caregiver", "Clinician"], "stages": ["Newly diagnosed", "Daily life"], "type": "Portal + helpline", "url": "https://rareportal.org.au", "summary": "Government-funded Australian rare disease portal, plus a helpline staffed by people trained in psychology and social work.", "access": "", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "Hearing Australia: complex hearing needs (CSO)", "org": "Hearing Australia", "country": "AU", "roles": ["Patient", "Caregiver"], "stages": ["Hearing & communication"], "type": "Government service", "url": "https://hearing.com.au/adult-hearing-services/our-funding-options/", "summary": "Sole provider of government-funded services for people with severe or profound loss or complex communication needs, and young adults under 26.", "access": "", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "NDIS hearing supports", "org": "NDIS", "country": "AU", "roles": ["Patient", "Caregiver"], "stages": ["Hearing & communication", "Daily life"], "type": "Government funding", "url": "https://www.ndis.gov.au/participants/assistive-technology/hearing-supports", "summary": "How the NDIS can fund hearing supports beyond the Hearing Services Program.", "access": "", "reliability": "Clinical / official", "status": "Verified", "checked": "2026-11-22"}, {"name": "Acoustic Neuroma Association Australia", "org": "ANAA", "country": "AU", "roles": ["Patient", "Caregiver"], "stages": ["Treatment decisions", "Daily life"], "type": "Charity + peer support", "url": "https://www.anaa.org.au", "summary": "Support and information since 1984 for people facing treatment for acoustic neuroma or other benign cranial tumours.", "access": "", "reliability": "Charity", "status": "Verified", "checked": "2026-11-22"}, {"name": "Malaysian Rare Disorders Society (MRDS)", "org": "MRDS", "country": "MY", "roles": ["Patient", "Caregiver"], "stages": ["Newly diagnosed", "Daily life"], "type": "Charity + peer support", "url": "https://www.mrds.org.my", "summary": "National rare disease society. Supports informal patient groups, including for neurofibromatosis.", "access": "Not NF2-specific.", "reliability": "Charity", "status": "Verified", "checked": "2026-11-22"}];
+
+const ROLES = ["Patient","Caregiver","Clinician","Employer"];
+const STAGES = [
+  ["Diagnosis","Getting diagnosed"],
+  ["Newly diagnosed","Just diagnosed"],
+  ["Ongoing care","Finding a specialist & ongoing care"],
+  ["Treatment decisions","Treatment decisions"],
+  ["Hearing & communication","Hearing & communication"],
+  ["Daily life","Work, money, wellbeing & family"],
+  ["Research & trials","Research & clinical trials"]
+];
+const COUNTRIES = [["AU","Australia"],["UK","United Kingdom"],["US","United States"],["MY","Malaysia"]];
+const REL_RANK = {"Clinical / official":0,"Charity (medically advised)":1,"Charity":2,"Research paper":3,"Volunteer-run":4,"News / commentary":5};
+const REL_CLASS = {"Clinical / official":"rel-official","Charity (medically advised)":"rel-med","Volunteer-run":"rel-vol","News / commentary":"rel-news"};
+const ROLE_LABEL = {Patient:"Living with NF2",Caregiver:"A family member or carer",Clinician:"A clinician",Employer:"An employer or teacher"};
+
+const state = {role:null, stage:null, country:null, q:"", intl:true, nohearing:false};
+
+function chip(group, value, label){
+  const b = document.createElement("button");
+  b.type="button"; b.className="chip"; b.textContent=label;
+  b.dataset.value = value ?? "";
+  b.setAttribute("aria-pressed", String((state[group]??"") === (value??"")));
+  b.addEventListener("click", ()=>{ state[group] = value; renderChips(); render(); });
+  return b;
+}
+function renderChips(){
+  const opts = {
+    role:[[null,"Anyone"],...ROLES.map(r=>[r,ROLE_LABEL[r]])],
+    stage:[[null,"Everything"],...STAGES],
+    country:[[null,"Anywhere"],...COUNTRIES]
+  };
+  for (const g of Object.keys(opts)){
+    const el = document.querySelector(`[data-group="${g}"]`);
+    el.replaceChildren(...opts[g].map(([v,l])=>chip(g,v,l)));
+  }
+}
+
+const NOHEARING = /text|email/i;
+function matches(r){
+  if (state.role && !r.roles.includes(state.role)) return false;
+  if (state.stage && !r.stages.includes(state.stage)) return false;
+  if (state.country){
+    if (r.country !== state.country && !(state.intl && r.country === "International")) return false;
+  } else if (!state.intl && r.country === "International") return false;
+  if (state.nohearing && !NOHEARING.test(r.access + " " + r.summary + " " + r.type)) return false;
+  if (state.q){
+    const hay = [r.name,r.org,r.summary,r.access,r.type,r.stages.join(" "),r.country].join(" ").toLowerCase();
+    if (!state.q.toLowerCase().split(/\s+/).every(w=>hay.includes(w))) return false;
+  }
+  return true;
+}
+function sortKey(r){
+  return [ r.country === "International" ? 1 : 0, r.status === "Verified" ? 0 : 1, REL_RANK[r.reliability] ?? 9, r.name ];
+}
+function cmp(a,b){ const x=sortKey(a), y=sortKey(b); for(let i=0;i<x.length;i++){ if(x[i]<y[i])return -1; if(x[i]>y[i])return 1;} return 0; }
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+const COUNTRY_NAME = Object.fromEntries([...COUNTRIES,["International","International"]]);
+
+function card(r){
+  const li = el("li","card");
+  li.append(el("h3",null,r.name), el("div","org",r.org));
+  const tags = el("div","tags");
+  tags.append(el("span","tag",COUNTRY_NAME[r.country]||r.country), el("span","tag",r.type), el("span","tag "+(REL_CLASS[r.reliability]||""), r.reliability));
+  if (r.status !== "Verified") tags.append(el("span","tag verify", r.status === "Find official page" ? "Link coming" : "Link being checked"));
+  li.append(tags, el("p",null,r.summary));
+  if (r.access) li.append(el("div","access",r.access));
+  const foot = el("div","foot");
+  foot.append(el("span",null,"For: "+r.roles.join(", ")+" · checked "+r.checked));
+  if (r.url){ const a=el("a","open","Open ↗"); a.href=r.url; a.target="_blank"; a.rel="noopener noreferrer"; a.setAttribute("aria-label","Open "+r.name+" (opens in a new tab)"); foot.append(a); }
+  li.append(foot);
+  return li;
+}
+
+let current = [];
+function render(){
+  current = DATA.filter(matches).sort(cmp);
+  const list = document.getElementById("results");
+  const bits = [];
+  if (state.role) bits.push(ROLE_LABEL[state.role].toLowerCase());
+  if (state.stage) bits.push((STAGES.find(s=>s[0]===state.stage)||[])[1]?.toLowerCase());
+  if (state.country) bits.push(COUNTRY_NAME[state.country]);
+  document.getElementById("count").innerHTML = `${current.length} resource${current.length===1?"":"s"}` + (bits.length?` <small>for ${bits.map(escapeHtml).join(" · ")}</small>`:"");
+  if (!current.length){
+    const li = el("li","empty");
+    li.append(el("p",null,"Nothing matches all of those yet — that's a gap we want to fill."), el("p",null,"Try “Everything” in step 2, or tick “Include international resources”."));
+    list.replaceChildren(li); return;
+  }
+  list.replaceChildren(...current.map(card));
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+document.getElementById("q").addEventListener("input", e=>{ state.q=e.target.value.trim(); render(); });
+document.getElementById("intl").addEventListener("change", e=>{ state.intl=e.target.checked; render(); });
+document.getElementById("nohearing").addEventListener("change", e=>{ state.nohearing=e.target.checked; render(); });
+document.getElementById("finder").addEventListener("submit", e=>e.preventDefault());
+document.getElementById("reset").addEventListener("click", ()=>{
+  Object.assign(state,{role:null,stage:null,country:null,q:"",intl:true,nohearing:false});
+  document.getElementById("q").value=""; document.getElementById("intl").checked=true; document.getElementById("nohearing").checked=false;
+  renderChips(); render();
+});
+document.getElementById("copy").addEventListener("click", async ()=>{
+  const text = current.map(r=>`• ${r.name} (${r.org})${r.url?"\n  "+r.url:""}`).join("\n");
+  const status = document.getElementById("status");
+  try { await navigator.clipboard.writeText(text || "No resources selected."); status.textContent="Copied — paste it into a message or notes."; }
+  catch { status.textContent="Couldn't copy here — select the cards and copy instead."; }
+  setTimeout(()=>status.textContent="", 4000);
+});
+
+renderChips(); render();
+</script>
+</body>
+</html>

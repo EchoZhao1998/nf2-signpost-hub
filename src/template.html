@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediPort Signpost — NF2-SWN resource hub (prototype)</title>
+<meta name="description" content="Find trusted NF2-related schwannomatosis resources by role, journey stage and country.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f3ec; --paper:#fffdf8; --ink:#14302f; --muted:#4f6463; --line:#ddd6c8;
+    --accent:#0e6b5c; --accent-ink:#ffffff; --accent-soft:#dcefe9;
+    --warn:#8a5a00; --warn-soft:#fbefd4;
+    --focus:#c2410c;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html{font-size:17px}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,sans-serif;line-height:1.55}
+  a{color:var(--accent)}
+  :focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+  .skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:var(--paper);padding:8px 12px;z-index:9}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+  header{padding:40px 0 8px}
+  .eyebrow{display:inline-block;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--paper)}
+  h1{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:clamp(1.9rem,4.4vw,2.8rem);line-height:1.12;margin:14px 0 10px;max-width:22ch}
+  .lede{color:var(--muted);max-width:60ch;margin:0}
+
+  .finder{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin:26px 0 18px}
+  fieldset{border:0;margin:0 0 18px;padding:0}
+  legend{font-weight:700;margin-bottom:8px;display:flex;gap:10px;align-items:center}
+  .num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font-size:.85rem}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font:inherit;font-size:.95rem;border:1.5px solid var(--line);background:#fff;color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer;min-height:40px}
+  .chip:hover{border-color:var(--accent)}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .row{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center;border-top:1px dashed var(--line);padding-top:16px}
+  .search{flex:1 1 260px;display:flex}
+  .search input{flex:1;font:inherit;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;background:#fff;min-height:44px}
+  label.toggle{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:.95rem}
+  label.toggle input{width:20px;height:20px;accent-color:var(--accent)}
+
+  .bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin:8px 0 14px}
+  .count{font-weight:700}
+  .count small{font-weight:400;color:var(--muted)}
+  .btn{font:inherit;font-size:.92rem;border:1.5px solid var(--ink);background:transparent;color:var(--ink);padding:7px 14px;border-radius:10px;cursor:pointer;min-height:40px}
+  .btn:hover{background:var(--ink);color:#fff}
+  .status{font-size:.9rem;color:var(--accent);min-height:1.2em}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;padding:0;margin:0;list-style:none}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:10px}
+  .card h3{margin:0;font-size:1.08rem;line-height:1.3}
+  .org{color:var(--muted);font-size:.9rem;margin-top:-6px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px}
+  .tag{font-size:.78rem;padding:2px 9px;border-radius:999px;background:#efebe2;color:var(--ink)}
+  .tag.rel-official{background:#d9efe2}.tag.rel-med{background:#dcefe9}.tag.rel-vol{background:#fbe5d2}.tag.rel-news{background:#e7e7e7}
+  .tag.verify{background:var(--warn-soft);color:var(--warn);font-weight:700}
+  .card p{margin:0}
+  .access{font-size:.9rem;background:#f1f6f4;border-left:3px solid var(--accent);padding:6px 10px;border-radius:0 8px 8px 0}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.85rem;color:var(--muted)}
+  .open{white-space:nowrap;font-weight:700;text-decoration:none;border-bottom:2px solid currentColor}
+  .empty{background:var(--paper);border:1px dashed var(--line);border-radius:var(--r);padding:28px;text-align:center}
+
+  footer{margin:40px 0 50px;font-size:.88rem;color:var(--muted);border-top:1px solid var(--line);padding-top:18px}
+  footer p{max-width:75ch}
+  @media (max-width:560px){html{font-size:16px}.finder{padding:16px}}
+  @media (prefers-reduced-motion:no-preference){.card{animation:in .25s ease both}@keyframes in{from{opacity:0;transform:translateY(4px)}}}
+</style>
+</head>
+<body>
+<a class="skip" href="#results">Skip to results</a>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">MediPort · prototype</span>
+    <h1>Find NF2-SWN help that fits where you are.</h1>
+    <p class="lede">Trusted information already exists, but it is spread across many charities, hospitals and countries. Answer three quick questions and we'll point you to the right places.</p>
+  </header>
+
+  <form class="finder" id="finder" aria-label="Filter resources">
+    <fieldset>
+      <legend><span class="num" aria-hidden="true">1</span>I am…</legend>
+      <div class="chips" data-group="role"></div>
+    </fieldset>
+    <fieldset>
+      <legend><span class="num" aria-hidden="true">2</span>I need help with…</legend>
+      <div class="chips" data-group="stage"></div>
+    </fieldset>
+    <fieldset>
+      <legend><span class="num" aria-hidden="true">3</span>I live in…</legend>
+      <div class="chips" data-group="country"></div>
+    </fieldset>
+    <div class="row">
+      <div class="search"><input id="q" type="search" placeholder="Search, e.g. lip-reading, helpline, Oxford" aria-label="Search resources"></div>
+      <label class="toggle"><input type="checkbox" id="intl" checked> Include international resources</label>
+      <label class="toggle"><input type="checkbox" id="nohearing"> Works without hearing (text/email)</label>
+    </div>
+  </form>
+
+  <div class="bar">
+    <div class="count" id="count" aria-live="polite"></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="status" id="status" aria-live="polite"></span>
+      <button class="btn" id="copy" type="button">Copy this list</button>
+      <button class="btn" id="reset" type="button">Reset</button>
+    </div>
+  </div>
+
+  <ul class="grid" id="results"></ul>
+
+  <footer>
+    <p><strong>Not medical advice.</strong> This hub links to information published by other organisations. Summaries are our own words; always follow your care team's advice. Each card shows when its link was last checked.</p>
+    <p>Prototype for the MediPort project · data from the NF2-SWN Resource Map (__COUNT__ resources, last updated __UPDATED__).</p>
+  </footer>
+</div>
+
+<script>
+const DATA = /*__DATA__*/[];
+
+const ROLES = ["Patient","Caregiver","Clinician","Employer"];
+const STAGES = [
+  ["Diagnosis","Getting diagnosed"],
+  ["Newly diagnosed","Just diagnosed"],
+  ["Ongoing care","Finding a specialist & ongoing care"],
+  ["Treatment decisions","Treatment decisions"],
+  ["Hearing & communication","Hearing & communication"],
+  ["Daily life","Work, money, wellbeing & family"],
+  ["Research & trials","Research & clinical trials"]
+];
+const COUNTRIES = [["AU","Australia"],["UK","United Kingdom"],["US","United States"],["MY","Malaysia"]];
+const REL_RANK = {"Clinical / official":0,"Charity (medically advised)":1,"Charity":2,"Research paper":3,"Volunteer-run":4,"News / commentary":5};
+const REL_CLASS = {"Clinical / official":"rel-official","Charity (medically advised)":"rel-med","Volunteer-run":"rel-vol","News / commentary":"rel-news"};
+const ROLE_LABEL = {Patient:"Living with NF2",Caregiver:"A family member or carer",Clinician:"A clinician",Employer:"An employer or teacher"};
+
+const state = {role:null, stage:null, country:null, q:"", intl:true, nohearing:false};
+
+function chip(group, value, label){
+  const b = document.createElement("button");
+  b.type="button"; b.className="chip"; b.textContent=label;
+  b.dataset.value = value ?? "";
+  b.setAttribute("aria-pressed", String((state[group]??"") === (value??"")));
+  b.addEventListener("click", ()=>{ state[group] = value; renderChips(); render(); });
+  return b;
+}
+function renderChips(){
+  const opts = {
+    role:[[null,"Anyone"],...ROLES.map(r=>[r,ROLE_LABEL[r]])],
+    stage:[[null,"Everything"],...STAGES],
+    country:[[null,"Anywhere"],...COUNTRIES]
+  };
+  for (const g of Object.keys(opts)){
+    const el = document.querySelector(`[data-group="${g}"]`);
+    el.replaceChildren(...opts[g].map(([v,l])=>chip(g,v,l)));
+  }
+}
+
+const NOHEARING = /text|email/i;
+function matches(r){
+  if (state.role && !r.roles.includes(state.role)) return false;
+  if (state.stage && !r.stages.includes(state.stage)) return false;
+  if (state.country){
+    if (r.country !== state.country && !(state.intl && r.country === "International")) return false;
+  } else if (!state.intl && r.country === "International") return false;
+  if (state.nohearing && !NOHEARING.test(r.access + " " + r.summary + " " + r.type)) return false;
+  if (state.q){
+    const hay = [r.name,r.org,r.summary,r.access,r.type,r.stages.join(" "),r.country].join(" ").toLowerCase();
+    if (!state.q.toLowerCase().split(/\s+/).every(w=>hay.includes(w))) return false;
+  }
+  return true;
+}
+function sortKey(r){
+  return [ r.country === "International" ? 1 : 0, r.status === "Verified" ? 0 : 1, REL_RANK[r.reliability] ?? 9, r.name ];
+}
+function cmp(a,b){ const x=sortKey(a), y=sortKey(b); for(let i=0;i<x.length;i++){ if(x[i]<y[i])return -1; if(x[i]>y[i])return 1;} return 0; }
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e; }
+const COUNTRY_NAME = Object.fromEntries([...COUNTRIES,["International","International"]]);
+
+function card(r){
+  const li = el("li","card");
+  li.append(el("h3",null,r.name), el("div","org",r.org));
+  const tags = el("div","tags");
+  tags.append(el("span","tag",COUNTRY_NAME[r.country]||r.country), el("span","tag",r.type), el("span","tag "+(REL_CLASS[r.reliability]||""), r.reliability));
+  if (r.status !== "Verified") tags.append(el("span","tag verify", r.status === "Find official page" ? "Link coming" : "Link being checked"));
+  li.append(tags, el("p",null,r.summary));
+  if (r.access) li.append(el("div","access",r.access));
+  const foot = el("div","foot");
+  foot.append(el("span",null,"For: "+r.roles.join(", ")+" · checked "+r.checked));
+  if (r.url){ const a=el("a","open","Open ↗"); a.href=r.url; a.target="_blank"; a.rel="noopener noreferrer"; a.setAttribute("aria-label","Open "+r.name+" (opens in a new tab)"); foot.append(a); }
+  li.append(foot);
+  return li;
+}
+
+let current = [];
+function render(){
+  current = DATA.filter(matches).sort(cmp);
+  const list = document.getElementById("results");
+  const bits = [];
+  if (state.role) bits.push(ROLE_LABEL[state.role].toLowerCase());
+  if (state.stage) bits.push((STAGES.find(s=>s[0]===state.stage)||[])[1]?.toLowerCase());
+  if (state.country) bits.push(COUNTRY_NAME[state.country]);
+  document.getElementById("count").innerHTML = `${current.length} resource${current.length===1?"":"s"}` + (bits.length?` <small>for ${bits.map(escapeHtml).join(" · ")}</small>`:"");
+  if (!current.length){
+    const li = el("li","empty");
+    li.append(el("p",null,"Nothing matches all of those yet — that's a gap we want to fill."), el("p",null,"Try “Everything” in step 2, or tick “Include international resources”."));
+    list.replaceChildren(li); return;
+  }
+  list.replaceChildren(...current.map(card));
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+document.getElementById("q").addEventListener("input", e=>{ state.q=e.target.value.trim(); render(); });
+document.getElementById("intl").addEventListener("change", e=>{ state.intl=e.target.checked; render(); });
+document.getElementById("nohearing").addEventListener("change", e=>{ state.nohearing=e.target.checked; render(); });
+document.getElementById("finder").addEventListener("submit", e=>e.preventDefault());
+document.getElementById("reset").addEventListener("click", ()=>{
+  Object.assign(state,{role:null,stage:null,country:null,q:"",intl:true,nohearing:false});
+  document.getElementById("q").value=""; document.getElementById("intl").checked=true; document.getElementById("nohearing").checked=false;
+  renderChips(); render();
+});
+document.getElementById("copy").addEventListener("click", async ()=>{
+  const text = current.map(r=>`• ${r.name} (${r.org})${r.url?"\n  "+r.url:""}`).join("\n");
+  const status = document.getElementById("status");
+  try { await navigator.clipboard.writeText(text || "No resources selected."); status.textContent="Copied — paste it into a message or notes."; }
+  catch { status.textContent="Couldn't copy here — select the cards and copy instead."; }
+  setTimeout(()=>status.textContent="", 4000);
+});
+
+renderChips(); render();
+</script>
+</body>
+</html>
